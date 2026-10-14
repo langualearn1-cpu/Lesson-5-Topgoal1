@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ورقة عمل ولعبة تفاعلية • المعلم ماجد السويهري</title>
+
+  <!-- Tailwind CSS & Canvas Confetti -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <!-- Google Fonts: Fredoka & Tajawal -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: radial-gradient(circle at 50% 0%, #f0f9ff 0%, #fef7ee 40%, #f5f3ff 80%, #ecfeff 100%);
+      color: #1e293b;
+      min-height: 100vh;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .en-font {
+      font-family: 'Fredoka', cursive, sans-serif;
+    }
+
+    /* Teacher Gold Ribbon */
+    .teacher-badge {
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fde68a 100%);
+      border: 2.5px solid #f59e0b;
+      box-shadow: 0 8px 18px -4px rgba(245, 158, 11, 0.35);
+    }
+
+    /* Worksheet Canvas Sheet */
+    .worksheet-canvas {
+      background: #ffffff;
+      border: 3.5px solid #38bdf8;
+      border-radius: 36px;
+      box-shadow: 0 25px 50px -12px rgba(14, 165, 233, 0.22), 0 0 0 8px #f0f9ff;
+    }
+
+    /* Interactive Missing Letter Tile */
+    .missing-input-slot {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 32px;
+      height: 38px;
+      border-bottom: 3.5px solid #0284c7;
+      background: #f0f9ff;
+      border-radius: 8px 8px 0 0;
+      font-family: 'Fredoka', cursive;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #0369a1;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      margin: 0 2px;
+    }
+    .missing-input-slot.filled-correct {
+      border-bottom: 3.5px solid #10b981;
+      background: #ecfdf5;
+      color: #047857;
+    }
+    .missing-input-slot.filled-wrong {
+      border-bottom: 3.5px solid #ef4444;
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+
+    /* Interactive Selection Button Cards */
+    .choice-pill-btn {
+      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+      cursor: pointer;
+      user-select: none;
+    }
+    .choice-pill-btn:hover {
+      transform: translateY(-2px) scale(1.03);
+    }
+    .choice-pill-btn:active {
+      transform: scale(0.96);
+    }
+    .choice-pill-btn.is-active-choice {
+      border-color: #0284c7 !important;
+      background-color: #0284c7 !important;
+      color: #ffffff !important;
+      box-shadow: 0 8px 16px -2px rgba(2, 132, 199, 0.35);
+    }
+
+    /* Shake & Success animations */
+    @keyframes shakeCard {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+    .shake-anim {
+      animation: shakeCard 0.45s ease-in-out;
+    }
+
+    @keyframes popBounce {
+      0% { transform: scale(0.92); }
+      50% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+    .pop-success {
+      animation: popBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* Navigation Tab Active */
+    .nav-tab-btn.active-tab {
+      background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+      color: #ffffff !important;
+      border-color: #38bdf8 !important;
+      box-shadow: 0 8px 18px -3px rgba(2, 132, 199, 0.45) !important;
+      transform: translateY(-2px);
+    }
+
+    /* Ruled line for writing */
+    .ruled-line-slot {
+      border-bottom: 2.5px dashed #94a3b8;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Fredoka', cursive;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #1e293b;
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
+    .ruled-line-slot.line-correct {
+      border-bottom: 3px solid #10b981;
+      background: #ecfdf5;
+      color: #047857;
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body class="p-2 sm:p-4 md:p-6 lg:p-8 flex justify-center">
+
+  <div class="w-full max-w-4xl flex flex-col items-center">
+
+    <!-- Top Ribbon Toolbar -->
+    <header class="w-full bg-white/95 backdrop-blur-md px-4 py-3 rounded-3xl shadow-sm border-2 border-amber-200 mb-4 flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Teacher Name & Identity Badge (No Logo as requested) -->
+      <div class="flex items-center gap-3">
+        <div class="teacher-badge px-4 py-1.5 rounded-2xl flex items-center gap-2 transform -rotate-1 hover:rotate-0 transition">
+          <span class="text-xl">📜</span>
+          <span class="text-slate-900 font-black text-sm sm:text-base">المعلم: ماجد السويهري</span>
+        </div>
+        <div>
+          <h1 class="text-xs sm:text-sm font-black text-slate-800 leading-tight">درس وتطبيقات المفردات التفاعلية</h1>
+          <p class="text-[11px] font-bold text-sky-700">نطق إنجليزي فصيح 🇨🇦 مع استجابة فورية ناطقة بالعربية</p>
+        </div>
+      </div>
+
+      <!-- Controls & Live Score -->
+      <div class="flex items-center flex-wrap gap-2">
+        <!-- Sound Toggle -->
+        <button onclick="toggleAudioMute()" id="btnMuteToggle" class="w-9 h-9 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm flex items-center justify-center transition active:scale-95" title="كتم / تشغيل الصوت">
+          <span id="muteIcon">🔊</span>
+        </button>
+
+        <!-- Speed Toggle -->
+        <div class="inline-flex rounded-2xl bg-slate-100 p-1 border border-slate-200 text-xs">
+          <button onclick="setAudioSpeed(0.85)" id="speedSlow" class="px-2 py-0.5 rounded-xl font-bold text-slate-600 hover:bg-white transition">0.8x</button>
+          <button onclick="setAudioSpeed(1.0)" id="speedNormal" class="px-2.5 py-0.5 rounded-xl bg-sky-600 text-white font-black shadow-xs transition">1.0x</button>
+        </div>
+
+        <!-- Score Badge -->
+        <div class="px-3.5 py-1.5 rounded-2xl bg-emerald-600 text-white text-xs sm:text-sm font-black flex items-center gap-1.5 shadow-sm">
+          <span>⭐ النقاط:</span>
+          <span id="scoreTracker" class="en-font text-base font-black">0</span>
+          <span>/ 24</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs for Modes -->
+    <nav class="w-full flex items-center justify-center gap-2 mb-4 flex-wrap" id="modeTabBar">
+      <button onclick="switchMode('sheet')" id="tabBtn-sheet" class="nav-tab-btn active-tab px-4 py-2 rounded-2xl bg-white text-slate-700 border-2 border-slate-200 font-black text-xs sm:text-sm shadow-xs transition flex items-center gap-1.5">
+        <span>📝</span>
+        <span>ورقة العمل الأصلية كاملة</span>
+      </button>
+      <button onclick="switchMode('match')" id="tabBtn-match" class="nav-tab-btn px-4 py-2 rounded-2xl bg-white text-slate-700 border-2 border-slate-200 font-black text-xs sm:text-sm shadow-xs transition flex items-center gap-1.5">
+        <span>🔗</span>
+        <span>لعبة التوصيل الذكي (Match)</span>
+      </button>
+      <button onclick="switchMode('spelling')" id="tabBtn-spelling" class="nav-tab-btn px-4 py-2 rounded-2xl bg-white text-slate-700 border-2 border-slate-200 font-black text-xs sm:text-sm shadow-xs transition flex items-center gap-1.5">
+        <span>🔤</span>
+        <span>لعبة رتّب الحروف (Unscramble)</span>
+      </button>
+    </nav>
+
+    <!-- =========================================================================
+         VIEW 1: COMPLETE INTERACTIVE WORKSHEET (ALL 3 PARTS IN IMAGE)
+         ========================================================================= -->
+    <main id="viewSheetMode" class="worksheet-canvas w-full p-4 sm:p-7 md:p-8 relative">
+
+      <!-- Worksheet Header -->
+      <div class="text-center pb-5 mb-6 border-b-2 border-sky-100 flex flex-col items-center justify-center">
+        <h2 class="en-font text-3xl sm:text-4xl md:text-5xl font-black text-sky-600 tracking-wide drop-shadow-xs italic">
+          Write the missing letters
+        </h2>
+        <p class="text-xs sm:text-sm font-bold text-slate-500 mt-1">
+          💡 انقر على الحرف الناقص لتعبئة الفراغ وسماع نطق الكلمة الإنجليزية!
+        </p>
+      </div>
+
+      <!-- PART 1: THE 8 WORDS WITH MISSING LETTERS -->
+      <section class="mb-8 p-4 sm:p-6 rounded-3xl bg-sky-50/70 border-2 border-sky-200 shadow-xs">
+        
+        <!-- Letter Bank Helper Pills -->
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-2 pb-2 border-b border-sky-200">
+          <span class="text-xs font-black text-sky-900 bg-sky-100 px-3 py-1 rounded-xl">
+            بنك الحروف المساعدة (انقر لاختيار الحرف ثم انقر الفراغ):
+          </span>
+          <div class="flex items-center gap-1.5 flex-wrap" dir="ltr" id="missingLettersBank">
+            <!-- Buttons dynamically generated -->
+          </div>
+        </div>
+
+        <!-- The 8 Missing Letter Questions (Matching Image Layout) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5" dir="ltr" id="missingLettersGrid">
+          
+          <!-- 1- Ball_ _ns (Balloons) -->
+          <div class="p-3.5 rounded-2xl bg-white border-2 border-sky-200 flex items-center justify-between shadow-2xs hover:border-sky-400 transition" id="box-miss-1">
+            <div class="flex items-center gap-1 flex-nowrap whitespace-nowrap">
+              <span class="en-font font-black text-xl sm:text-2xl text-slate-900 whitespace-nowrap">1- Ball</span>
+              <span class="missing-input-slot" id="slot-1-a" onclick="handleSlotInteraction(1, 'a', 'o')">_</span>
+              <span class="missing-input-slot" id="slot-1-b" onclick="handleSlotInteraction(1, 'b', 'o')">_</span>
+              <span class="en-font font-black text-xl sm:text-2xl text-slate-900 whitespace-nowrap">ns</span>
+            </div>
+            <button onclick="playItemAudio('Balloons')" class="p-1 text-slate-400 hover:text-sky-600 transition shrink-0" title="استمع">🔊</button>
+          </div>
+
+          <!-- 2- gui_ar (guitar) -->
+          <div class="p-3.5 rounded-2xl bg-white border-2 border-pink-200 flex items-center justify-between shadow-2xs hover:border-pink-400 transition" id="box-miss-2">
+            <div class="flex items-center gap-1 flex-nowrap whitespace-nowrap">
+              <span class="en-font font-black text-xl sm:text-2xl text-slate-900 whitespace-nowrap">2- gui</span>
+              <span class="missing-input-slot" id="slot-2-a" onclick="handleSlotInteraction(2, 'a', 't')">_</span>
+              <span class="en-font font-black text-xl sm:text-2xl text-slate-900 whitespace-nowrap">ar</span>
+            </div>
+            <button onclick="playItemAudio('guitar')" class="p-1 text-slate-400 hover:text-sky-600 transition shrink-0" title="استمع">🔊</button>
+          </div>
+
+          <!-- 3- B_s (Bus) -->
+          <div class="p-3.5 rounded-2xl bg-white border-2 border-amber-200 flex items-center justify-between shadow-2xs hover:border-amber-400 transition" id="box-miss-3">
+            <div class="flex items-center gap-1 flex-nowrap whitespace-nowrap">
+              <span class="en-font font-black text-xl sm:text-2xl text-slate-900 whitespace-nowrap">3- B</span>
+              <span class="missing-input-slot" id="slot-3-a" onclick="handleSlotInteraction(3, 'a', 'u')">_</span>
+              <span class="en-font font-black text-xl sm:text-2xl text-slate-900 whitespace-nowrap">s</span>
+            </div>
+            <button onclick="playItemAudio('Bus')" class="p-1 text-slate-400 hover:text-sky-600 transition shrink-0" title="استمع">🔊</button>
+          </div>
+
+          <!-- 4- dru_s (drums) -->
+          <div class="p-3.5 rounded-2xl bg-white border-2 border-emerald-200 flex items-center justify-between shadow-2xs hover:border-emerald-400 transition" id="box-miss-4">
+            <div class="flex items-center gap-1 flex-nowrap whitespace-nowrap">
+              <span class="en-font font-black text-xl sm:text-2xl text-slate-900 whitespace-nowrap">4- dru</span>
+              <span class="missing-input-slot" id="slot-4-a" onclick="handleSlotInteraction(4, 'a', 'm')">_</span>
+              <span class="en-font font-black text-xl sm:text-2xl text-slate-900 whitespace-nowrap">s</span>
+            </div>
+            <button onclick="playItemAudio('drums')" class="p-1 text-slate-400 hover:text-sky-600 transition shrink-0" title="استمع">🔊</button>
+          </div>
+
+          <!-- 5- came_a (camera) -->
+          <div class="p-3.5 rounded-2xl bg-white border-2 border-lime-200 flex items-center justify-between shadow-2xs hover:border-lime-400 transition" id="box-miss-5">
+            <div class="flex items-center gap-1 flex-nowrap whitespace-nowrap">
+              <span class="en-font font-black text-xl sm:text-2xl text-slate-900 whitespace-nowrap">5- came</span>
+              <span class="missing-input-slot" id="slot-5-a" onclick="handleSlotInteraction(5, 'a', 'r')">_</span>
+              <span class="en-font font-black text-xl sm:text-2xl text-slate-900 whitespace-nowrap">a</span>
+            </div>
+            <button onclick="playItemAudio('camera')" class="p-1 text-slate-400 hover:text-sky-600 transition shrink-0" title="استمع">🔊</button>
+          </div>
+
+          <!-- 6- ph_to (photo) -->
+          <div class="p-3.5 rounded-2xl bg-white border-2 border-purple-200 flex items-center justify-between shadow-2xs hover:border-purple-400 transition" id="box-miss-6">
+            <div class="flex items-center gap-1 flex-nowrap whitespace-nowrap">
+              <span class="en-font font-black text-xl sm:text-2xl text-slate-900 whitespace-nowrap">6- ph</span>
+              <span class="missing-input-slot" id="slot-6-a" onclick="handleSlotInteraction(6, 'a', 'o')">_</span>
+              <span class="en-font font-black text-xl sm:text-2xl text-slate-900 whitespace-nowrap">to</span>
+            </div>
+            <button onclick="playItemAudio('photo')" class="p-1 text-slate-400 hover:text-sky-600 transition shrink-0" title="استمع">🔊</button>
+          </div>
+
+          <!-- 7- po_ter (poster) -->
+          <div class="p-3.5 rounded-2xl bg-white border-2 border-orange-200 flex items-center justify-between shadow-2xs hover:border-orange-400 transition" id="box-miss-7">
+            <div class="flex items-center gap-1 flex-nowrap whitespace-nowrap">
+              <span class="en-font font-black text-xl sm:text-2xl text-slate-900 whitespace-nowrap">7- po</span>
+              <span class="missing-input-slot" id="slot-7-a" onclick="handleSlotInteraction(7, 'a', 's')">_</span>
+              <span class="en-font font-black text-xl sm:text-2xl text-slate-900 whitespace-nowrap">ter</span>
+            </div>
+            <button onclick="playItemAudio('poster')" class="p-1 text-slate-400 hover:text-sky-600 transition shrink-0" title="استمع">🔊</button>
+          </div>
+
+          <!-- 8- p_ay_round (playground) -->
+          <div class="p-3.5 rounded-2xl bg-white border-2 border-violet-200 flex items-center justify-between shadow-2xs hover:border-violet-400 transition" id="box-miss-8">
+            <div class="flex items-center gap-0.5 sm:gap-1 flex-nowrap whitespace-nowrap">
+              <span class="en-font font-black text-lg sm:text-xl text-slate-900 whitespace-nowrap">8- p</span>
+              <span class="missing-input-slot" id="slot-8-a" onclick="handleSlotInteraction(8, 'a', 'l')">_</span>
+              <span class="en-font font-black text-lg sm:text-xl text-slate-900 whitespace-nowrap">ay</span>
+              <span class="missing-input-slot" id="slot-8-b" onclick="handleSlotInteraction(8, 'b', 'g')">_</span>
+              <span class="en-font font-black text-lg sm:text-xl text-slate-900 whitespace-nowrap">round</span>
+            </div>
+            <button onclick="playItemAudio('playground')" class="p-1 text-slate-400 hover:text-sky-600 transition shrink-0" title="استمع">🔊</button>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- PART 2: CHOOSE THE RIGHT ANSWER (Bag - pens - happy - notebooks) -->
+      <section class="mb-8 p-5 sm:p-6 rounded-3xl bg-amber-50/60 border-2 border-amber-300 shadow-xs">
+        
+        <div class="text-center mb-5">
+          <h3 class="text-xl sm:text-2xl font-black text-slate-900 mb-1">
+            Choose the right answer
+          </h3>
+          <div class="inline-flex items-center justify-center gap-2 sm:gap-4 flex-wrap bg-white px-5 py-2 rounded-2xl border-2 border-sky-400 text-sky-600 en-font text-lg sm:text-xl font-black shadow-xs" dir="ltr" id="part2BankRow">
+            <button onclick="selectP2Word('Bag')" class="choice-pill-btn px-3 py-1 rounded-xl bg-sky-50 border border-sky-200 hover:bg-sky-100" id="btn-p2-Bag">Bag</button>
+            <span class="text-slate-300">-</span>
+            <button onclick="selectP2Word('pens')" class="choice-pill-btn px-3 py-1 rounded-xl bg-sky-50 border border-sky-200 hover:bg-sky-100" id="btn-p2-pens">pens</button>
+            <span class="text-slate-300">-</span>
+            <button onclick="selectP2Word('happy')" class="choice-pill-btn px-3 py-1 rounded-xl bg-sky-50 border border-sky-200 hover:bg-sky-100" id="btn-p2-happy">happy</button>
+            <span class="text-slate-300">-</span>
+            <button onclick="selectP2Word('notebooks')" class="choice-pill-btn px-3 py-1 rounded-xl bg-sky-50 border border-sky-200 hover:bg-sky-100" id="btn-p2-notebooks">notebooks</button>
+          </div>
+          <p class="text-xs text-slate-500 font-bold mt-2">اختر الكلمة من الصندوق الأزرق أعلاه ثم اضغط على السطر المناسب تحت الصورة:</p>
+        </div>
+
+        <!-- 4 Picture Cards (pens, Bag, notebooks, happy) -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4" dir="ltr">
+          
+          <!-- Item 1: pens -->
+          <div class="bg-white rounded-2xl p-3 border-2 border-amber-200 shadow-2xs flex flex-col items-center justify-between text-center">
+            <!-- Illustrated Colorful Pens -->
+            <div class="w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center cursor-pointer hover:scale-105 transition" onclick="playItemAudio('pens')">
+              <svg class="w-full h-full drop-shadow-sm" viewBox="0 0 70 70" fill="none">
+                <!-- Pen 1 Cyan -->
+                <rect x="12" y="10" width="8" height="42" rx="3" fill="#06b6d4"/>
+                <polygon points="12,52 20,52 16,62" fill="#0891b2"/>
+                <circle cx="16" cy="62" r="1.5" fill="#0f172a"/>
+                <rect x="14" y="6" width="4" height="6" fill="#cbd5e1"/>
+                <!-- Pen 2 Orange -->
+                <rect x="25" y="8" width="8" height="44" rx="3" fill="#f97316"/>
+                <polygon points="25,52 33,52 29,62" fill="#ea580c"/>
+                <circle cx="29" cy="62" r="1.5" fill="#0f172a"/>
+                <rect x="27" y="4" width="4" height="6" fill="#cbd5e1"/>
+                <!-- Pen 3 Green -->
+                <rect x="38" y="12" width="8" height="40" rx="3" fill="#10b981"/>
+                <polygon points="38,52 46,52 42,62" fill="#059669"/>
+                <circle cx="42" cy="62" r="1.5" fill="#0f172a"/>
+                <rect x="40" y="8" width="4" height="6" fill="#cbd5e1"/>
+                <!-- Pen 4 Pink -->
+                <rect x="51" y="9" width="8" height="43" rx="3" fill="#ec4899"/>
+                <polygon points="51,52 59,52 55,62" fill="#db2777"/>
+                <circle cx="55" cy="62" r="1.5" fill="#0f172a"/>
+                <rect x="53" y="5" width="4" height="6" fill="#cbd5e1"/>
+              </svg>
+            </div>
+            <div class="w-full mt-2">
+              <span class="en-font font-bold text-slate-500 text-xs block mb-1">1)</span>
+              <div class="ruled-line-slot" id="line-p2-1" onclick="assignPart2Answer(1, 'pens')">
+                -------
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 2: Bag (Backpack) -->
+          <div class="bg-white rounded-2xl p-3 border-2 border-amber-200 shadow-2xs flex flex-col items-center justify-between text-center">
+            <!-- Illustrated School Backpack -->
+            <div class="w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center cursor-pointer hover:scale-105 transition" onclick="playItemAudio('Bag')">
+              <svg class="w-full h-full drop-shadow-sm" viewBox="0 0 70 70" fill="none">
+                <path d="M20 25C20 15 50 15 50 25V58C50 62 46 64 42 64H28C24 64 20 62 20 58V25Z" fill="#38bdf8"/>
+                <rect x="24" y="38" width="22" height="20" rx="4" fill="#fb923c"/>
+                <path d="M30 16C30 9 40 9 40 16" stroke="#fb923c" stroke-width="3" fill="none"/>
+                <ellipse cx="18" cy="42" rx="4" ry="12" fill="#fb923c"/>
+                <ellipse cx="52" cy="42" rx="4" ry="12" fill="#fb923c"/>
+                <circle cx="35" cy="45" r="2.5" fill="#ffffff"/>
+              </svg>
+            </div>
+            <div class="w-full mt-2">
+              <span class="en-font font-bold text-slate-500 text-xs block mb-1">2)</span>
+              <div class="ruled-line-slot" id="line-p2-2" onclick="assignPart2Answer(2, 'Bag')">
+                -------
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 3: notebooks -->
+          <div class="bg-white rounded-2xl p-3 border-2 border-amber-200 shadow-2xs flex flex-col items-center justify-between text-center">
+            <!-- Illustrated Spiral Notebooks -->
+            <div class="w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center cursor-pointer hover:scale-105 transition" onclick="playItemAudio('notebooks')">
+              <svg class="w-full h-full drop-shadow-sm" viewBox="0 0 70 70" fill="none">
+                <!-- Notebook 1 Yellow under -->
+                <rect x="18" y="16" width="38" height="46" rx="4" fill="#facc15" stroke="#ca8a04" stroke-width="1.5" transform="rotate(-6 18 16)"/>
+                <!-- Notebook 2 Pink on top -->
+                <rect x="22" y="14" width="38" height="46" rx="4" fill="#f43f5e" stroke="#be123c" stroke-width="1.5"/>
+                <rect x="26" y="18" width="30" height="38" rx="2" fill="#fecdd3"/>
+                <!-- Spiral binding -->
+                <circle cx="20" cy="20" r="2" fill="#cbd5e1" stroke="#334155" stroke-width="1"/>
+                <circle cx="20" cy="28" r="2" fill="#cbd5e1" stroke="#334155" stroke-width="1"/>
+                <circle cx="20" cy="36" r="2" fill="#cbd5e1" stroke="#334155" stroke-width="1"/>
+                <circle cx="20" cy="44" r="2" fill="#cbd5e1" stroke="#334155" stroke-width="1"/>
+                <circle cx="20" cy="52" r="2" fill="#cbd5e1" stroke="#334155" stroke-width="1"/>
+              </svg>
+            </div>
+            <div class="w-full mt-2">
+              <span class="en-font font-bold text-slate-500 text-xs block mb-1">3)</span>
+              <div class="ruled-line-slot" id="line-p2-3" onclick="assignPart2Answer(3, 'notebooks')">
+                -------
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 4: happy -->
+          <div class="bg-white rounded-2xl p-3 border-2 border-amber-200 shadow-2xs flex flex-col items-center justify-between text-center">
+            <!-- Illustrated Happy Jumping Children -->
+            <div class="w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center cursor-pointer hover:scale-105 transition" onclick="playItemAudio('happy')">
+              <svg class="w-full h-full drop-shadow-sm" viewBox="0 0 70 70" fill="none">
+                <!-- Kid 1 Girl -->
+                <circle cx="20" cy="26" r="6" fill="#fed7aa"/>
+                <path d="M14 24C14 20 26 20 26 24" stroke="#78350f" stroke-width="2"/>
+                <rect x="16" y="32" width="8" height="12" fill="#ec4899" rx="2"/>
+                <line x1="16" y1="44" x2="12" y2="54" stroke="#1e293b" stroke-width="2" stroke-linecap="round"/>
+                <line x1="24" y1="44" x2="26" y2="54" stroke="#1e293b" stroke-width="2" stroke-linecap="round"/>
+                <!-- Kid 2 Boy center jumping high -->
+                <circle cx="36" cy="20" r="7" fill="#fed7aa"/>
+                <path d="M30 18C30 14 42 14 42 18" stroke="#1e293b" stroke-width="2"/>
+                <rect x="31" y="27" width="10" height="14" fill="#10b981" rx="2"/>
+                <line x1="33" y1="41" x2="30" y2="52" stroke="#1e293b" stroke-width="2.2" stroke-linecap="round"/>
+                <line x1="39" y1="41" x2="43" y2="50" stroke="#1e293b" stroke-width="2.2" stroke-linecap="round"/>
+                <!-- Kid 3 Girl Right -->
+                <circle cx="52" cy="25" r="6" fill="#fed7aa"/>
+                <rect x="48" y="31" width="8" height="13" fill="#f59e0b" rx="2"/>
+                <line x1="48" y1="44" x2="44" y2="53" stroke="#1e293b" stroke-width="2" stroke-linecap="round"/>
+                <line x1="56" y1="44" x2="59" y2="53" stroke="#1e293b" stroke-width="2" stroke-linecap="round"/>
+                <!-- Sparkles -->
+                <text x="32" y="10" font-size="8">✨</text>
+              </svg>
+            </div>
+            <div class="w-full mt-2">
+              <span class="en-font font-bold text-slate-500 text-xs block mb-1">4)</span>
+              <div class="ruled-line-slot" id="line-p2-4" onclick="assignPart2Answer(4, 'happy')">
+                -------
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- PART 3: CHOOSE THE RIGHT ANSWER (Old - laugh - teacher - new) -->
+      <section class="p-5 sm:p-6 rounded-3xl bg-emerald-50/60 border-2 border-emerald-300 shadow-xs">
+        
+        <div class="text-center mb-5">
+          <h3 class="text-xl sm:text-2xl font-black text-slate-900 mb-1">
+            Choose the right answer
+          </h3>
+          <div class="inline-flex items-center justify-center gap-2 sm:gap-4 flex-wrap bg-white px-5 py-2 rounded-2xl border-2 border-blue-500 text-blue-600 en-font text-lg sm:text-xl font-black shadow-xs" dir="ltr" id="part3BankRow">
+            <button onclick="selectP3Word('Old')" class="choice-pill-btn px-3 py-1 rounded-xl bg-blue-50 border border-blue-200 hover:bg-blue-100" id="btn-p3-Old">Old</button>
+            <span class="text-slate-300">-</span>
+            <button onclick="selectP3Word('laugh')" class="choice-pill-btn px-3 py-1 rounded-xl bg-blue-50 border border-blue-200 hover:bg-blue-100" id="btn-p3-laugh">laugh</button>
+            <span class="text-slate-300">-</span>
+            <button onclick="selectP3Word('teacher')" class="choice-pill-btn px-3 py-1 rounded-xl bg-blue-50 border border-blue-200 hover:bg-blue-100" id="btn-p3-teacher">teacher</button>
+            <span class="text-slate-300">-</span>
+            <button onclick="selectP3Word('new')" class="choice-pill-btn px-3 py-1 rounded-xl bg-blue-50 border border-blue-200 hover:bg-blue-100" id="btn-p3-new">new</button>
+          </div>
+          <p class="text-xs text-slate-500 font-bold mt-2">اختر الكلمة من الصندوق أعلاه ثم انقر السطر المخصص تحت الصورة المطابقة:</p>
+        </div>
+
+        <!-- 4 Picture Cards (new car, laugh emoji, old car, teacher) -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4" dir="ltr">
+          
+          <!-- Item 1: new (Red Modern Sports Car) -->
+          <div class="bg-white rounded-2xl p-3 border-2 border-emerald-200 shadow-2xs flex flex-col items-center justify-between text-center">
+            <div class="w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center cursor-pointer hover:scale-105 transition" onclick="playItemAudio('new')">
+              <svg class="w-full h-full drop-shadow-sm" viewBox="0 0 75 55" fill="none">
+                <!-- Red Sporty Mustang -->
+                <path d="M10 28L18 16H52L62 26V40H10V28Z" fill="#dc2626"/>
+                <rect x="20" y="18" width="28" height="10" rx="2" fill="#bae6fd"/>
+                <circle cx="20" cy="40" r="7" fill="#1e293b"/>
+                <circle cx="20" cy="40" r="3" fill="#cbd5e1"/>
+                <circle cx="52" cy="40" r="7" fill="#1e293b"/>
+                <circle cx="52" cy="40" r="3" fill="#cbd5e1"/>
+                <!-- Front light & shine -->
+                <polygon points="62,28 66,32 62,35" fill="#facc15"/>
+                <text x="14" y="16" font-size="10">✨</text>
+              </svg>
+            </div>
+            <div class="w-full mt-2">
+              <span class="en-font font-bold text-slate-500 text-xs block mb-1">1)</span>
+              <div class="ruled-line-slot" id="line-p3-1" onclick="assignPart3Answer(1, 'new')">
+                -------
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 2: laugh (Laughing Tears of Joy Emoji) -->
+          <div class="bg-white rounded-2xl p-3 border-2 border-emerald-200 shadow-2xs flex flex-col items-center justify-between text-center">
+            <div class="w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center cursor-pointer hover:scale-105 transition" onclick="playItemAudio('laugh')">
+              <svg class="w-full h-full drop-shadow-sm" viewBox="0 0 70 70" fill="none">
+                <circle cx="35" cy="35" r="30" fill="#facc15" stroke="#1e293b" stroke-width="2.5"/>
+                <!-- Closed Laughing Eyes -->
+                <path d="M20 28L28 25L20 22" stroke="#1e293b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M50 28L42 25L50 22" stroke="#1e293b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- Wide Mouth -->
+                <path d="M21 38C21 54 49 54 49 38Z" fill="#1e293b"/>
+                <path d="M27 46C30 52 40 52 43 46Z" fill="#f43f5e"/>
+                <path d="M25 38H45" stroke="#ffffff" stroke-width="3"/>
+                <!-- Tears of Joy on both sides -->
+                <path d="M12 30C10 36 15 40 17 38C19 36 16 32 12 30Z" fill="#38bdf8"/>
+                <path d="M58 30C60 36 55 40 53 38C51 36 54 32 58 30Z" fill="#38bdf8"/>
+              </svg>
+            </div>
+            <div class="w-full mt-2">
+              <span class="en-font font-bold text-slate-500 text-xs block mb-1">2)</span>
+              <div class="ruled-line-slot" id="line-p3-2" onclick="assignPart3Answer(2, 'laugh')">
+                -------
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 3: Old (Vintage Rusty Classic Car) -->
+          <div class="bg-white rounded-2xl p-3 border-2 border-emerald-200 shadow-2xs flex flex-col items-center justify-between text-center">
+            <div class="w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center cursor-pointer hover:scale-105 transition" onclick="playItemAudio('Old')">
+              <svg class="w-full h-full drop-shadow-sm" viewBox="0 0 75 55" fill="none">
+                <!-- Vintage 1950s Classic Rusty Car -->
+                <path d="M8 32C8 26 14 20 22 20H48C56 20 62 26 64 32V42H8V32Z" fill="#94a3b8"/>
+                <path d="M12 28L20 22H46L54 28" fill="#cbd5e1"/>
+                <!-- Rust spots -->
+                <ellipse cx="26" cy="30" rx="5" ry="3" fill="#b45309" opacity="0.8"/>
+                <ellipse cx="44" cy="34" rx="7" ry="3.5" fill="#92400e" opacity="0.85"/>
+                <ellipse cx="56" cy="32" rx="4" ry="2" fill="#78350f" opacity="0.8"/>
+                <circle cx="18" cy="42" r="7" fill="#334155"/>
+                <circle cx="18" cy="42" r="3.5" fill="#e2e8f0"/>
+                <circle cx="52" cy="42" r="7" fill="#334155"/>
+                <circle cx="52" cy="42" r="3.5" fill="#e2e8f0"/>
+              </svg>
+            </div>
+            <div class="w-full mt-2">
+              <span class="en-font font-bold text-slate-500 text-xs block mb-1">3)</span>
+              <div class="ruled-line-slot" id="line-p3-3" onclick="assignPart3Answer(3, 'Old')">
+                -------
+              </div>
+            </div>
+          </div>
+
+          <!-- Item 4: teacher (Teacher at Blackboard) -->
+          <div class="bg-white rounded-2xl p-3 border-2 border-emerald-200 shadow-2xs flex flex-col items-center justify-between text-center">
+            <div class="w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center cursor-pointer hover:scale-105 transition" onclick="playItemAudio('teacher')">
+              <svg class="w-full h-full drop-shadow-sm" viewBox="0 0 75 55" fill="none">
+                <!-- Blackboard with wooden frame -->
+                <rect x="6" y="8" width="48" height="34" rx="2" fill="#065f46" stroke="#92400e" stroke-width="2.5"/>
+                <!-- Chalk writing ABC -->
+                <text x="14" y="22" font-size="6" fill="#fef08a" font-family="sans-serif">A B C</text>
+                <!-- Teacher standing right with book -->
+                <circle cx="58" cy="20" r="7" fill="#fed7aa"/>
+                <path d="M52 18C52 12 64 12 64 18" stroke="#1e293b" stroke-width="2"/>
+                <rect x="52" y="27" width="12" height="18" fill="#475569" rx="2"/>
+                <rect x="46" y="28" width="8" height="10" rx="1.5" fill="#38bdf8" transform="rotate(-15 46 28)"/>
+                <!-- Chalk in hand -->
+                <circle cx="50" cy="24" r="1.5" fill="#ffffff"/>
+              </svg>
+            </div>
+            <div class="w-full mt-2">
+              <span class="en-font font-bold text-slate-500 text-xs block mb-1">4)</span>
+              <div class="ruled-line-slot" id="line-p3-4" onclick="assignPart3Answer(4, 'teacher')">
+                -------
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- Footer Reset & Actions -->
+      <div class="mt-8 pt-4 border-t-2 border-sky-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">⭐</span>
+          <span class="font-bold">ورقة عمل الأستاذ ماجد السويهري • لغة إنجليزية تفاعلية</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="resetFullWorksheet()" class="px-4 py-2 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-950 font-black transition active:scale-95 flex items-center gap-1.5 shadow-2xs">
+            <span>🔄</span>
+            <span>إعادة تعيين الورقة</span>
+          </button>
+          <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">
+            🖨️ طباعة
+          </button>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- =========================================================================
+         VIEW 2: MATCHING GAME (وصل الكلمات بالصور)
+         ========================================================================= -->
+    <section id="viewMatchMode" class="w-full bg-white rounded-[38px] p-5 sm:p-8 shadow-2xl border-4 border-sky-300 hidden">
+      <div class="text-center mb-6">
+        <span class="px-3.5 py-1 rounded-full bg-sky-100 text-sky-800 text-xs font-black inline-block mb-2">
+          🔗 لعبة التوصيل والمطابقة
+        </span>
+        <h3 class="text-xl sm:text-2xl md:text-3xl font-black text-slate-900">طابق الكلمات بصورها الصحيحة:</h3>
+        <p class="text-xs sm:text-sm text-slate-500 font-bold mt-1">اضغط على الكلمة ثم اضغط على صورتها المطابقة لتوصيلها</p>
+      </div>
+
+      <!-- 8 Words Left, 8 Pics Right in Match Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5" dir="ltr" id="matchPairsContainer">
+        <!-- Injected via JavaScript -->
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         VIEW 3: UNSCRAMBLE LETTERS & SPELLING (رتب الحروف)
+         ========================================================================= -->
+    <section id="viewSpellingMode" class="w-full bg-white rounded-[38px] p-5 sm:p-8 shadow-2xl border-4 border-purple-300 hidden">
+      <div class="text-center mb-6">
+        <span class="px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-xs font-black inline-block mb-2">
+          🔤 لعبة رتّب الحروف المبعثرة
+        </span>
+        <h3 class="text-xl sm:text-2xl md:text-3xl font-black text-slate-900">رتب الحروف لتكوين الكلمة المطابقة للصورة:</h3>
+        <p class="text-xs sm:text-sm text-slate-500 font-bold mt-1">انقر على بطاقات الحروف بالترتيب الصحيح لتعبئة الخانات (الكلمة تظل سرية حتى تحلها)</p>
+      </div>
+
+      <!-- Carousel Pills (Hidden Word names until solved) -->
+      <div class="flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap mb-6" id="spellingPillsRow">
+        <!-- Injected via JavaScript -->
+      </div>
+
+      <!-- Unscramble Workspace Card -->
+      <div class="max-w-xl mx-auto p-6 sm:p-8 rounded-3xl bg-purple-50/70 border-3 border-purple-200 flex flex-col items-center text-center shadow-md mb-6" id="spellingWorkspace">
+        
+        <!-- Big Picture Display -->
+        <div class="w-32 h-28 sm:w-36 sm:h-32 mb-4 flex items-center justify-center" id="spellingPicBox">
+          <!-- Injected SVG -->
+        </div>
+
+        <button onclick="playSpellingAudioHint()" class="px-4 py-1.5 rounded-full bg-white border border-purple-300 text-purple-900 text-xs font-black flex items-center gap-1.5 shadow-2xs hover:bg-purple-100 transition active:scale-95 mb-5">
+          <span>🔊</span>
+          <span>استمع لنطق الكلمة</span>
+        </button>
+
+        <!-- Target letter slots -->
+        <div class="flex items-center justify-center gap-2 sm:gap-3 mb-6" dir="ltr" id="spellingSlotsRow">
+          <!-- Injected Slots -->
+        </div>
+
+        <!-- Scrambled Letter Bank -->
+        <div class="flex items-center justify-center gap-2 sm:gap-3 flex-wrap p-3 rounded-2xl bg-white border-2 border-dashed border-purple-300 w-full" dir="ltr" id="spellingLetterBank">
+          <!-- Injected Letter buttons -->
+        </div>
+
+        <div class="flex items-center justify-between w-full mt-5 pt-3 border-t border-purple-200 text-xs text-slate-500">
+          <button onclick="clearCurrentSpelling()" class="px-3.5 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold transition">
+            مسح المحاولة ✕
+          </button>
+          <button onclick="helpSolveSpelling()" class="px-3.5 py-1.5 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 font-black transition">
+            مساعدة 💡
+          </button>
+        </div>
+
+      </div>
+
+      <div class="flex items-center justify-between max-w-xl mx-auto text-xs sm:text-sm font-bold text-slate-500">
+        <span id="spellingProgressLabel">الكلمة: 1 من 8</span>
+        <button onclick="nextSpellingPuzzle()" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-black transition active:scale-95 shadow-xs">
+          الكلمة التالية ⏭️
+        </button>
+      </div>
+
+    </section>
+
+  </div>
+
+  <!-- Notification Toast Container -->
+  <div id="toastNotification" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 transform translate-y-28 opacity-0">
+    <div class="bg-slate-900 text-white px-6 py-3.5 rounded-2xl shadow-2xl border-2 border-sky-400 flex items-center gap-3 backdrop-blur-md">
+      <span id="toastIcon" class="text-2xl">✨</span>
+      <div>
+        <p id="toastTitle" class="text-sm font-black text-white"></p>
+        <p id="toastMsg" class="text-xs text-slate-300 font-medium"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================================
+       1. WEB AUDIO SYNTHESIZER (MUSIC & SFX)
+       ========================================================================= */
+    class SoundFX {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) this.ctx = new AudioContext();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+      playPop() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.frequency.setValueAtTime(450, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.05);
+        gain.gain.setValueAtTime(0.14, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      }
+      playSuccess() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+          gain.gain.setValueAtTime(0.001, now + idx * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.18, now + idx * 0.08 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.28);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + idx * 0.08);
+          osc.stop(now + idx * 0.08 + 0.3);
+        });
+      }
+      playError() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const notes = [280, 210];
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+          gain.gain.setValueAtTime(0.15, now + idx * 0.12);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.2);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + idx * 0.12);
+          osc.stop(now + idx * 0.12 + 0.22);
+        });
+      }
+    }
+    const sfx = new SoundFX();
+
+    /* =========================================================================
+       2. CANADIAN / ENGLISH & ARABIC SPEECH ENGINE
+       ========================================================================= */
+    class SpeechEngine {
+      constructor() {
+        this.synth = window.speechSynthesis;
+        this.enVoice = null;
+        this.arVoice = null;
+        this.rate = 1.0;
+        this.initVoices();
+        if (this.synth && this.synth.onvoiceschanged !== undefined) {
+          this.synth.onvoiceschanged = () => this.initVoices();
+        }
+      }
+      initVoices() {
+        if (!this.synth) return;
+        const voices = this.synth.getVoices();
+        this.enVoice = voices.find(v => v.lang === 'en-CA' || v.lang.includes('CA') || (v.lang.startsWith('en') && v.name.toLowerCase().includes('canada')))
+          || voices.find(v => v.lang.startsWith('en') && (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('samantha') || v.name.toLowerCase().includes('zira')))
+          || voices.find(v => v.lang.startsWith('en'))
+          || null;
+
+        this.arVoice = voices.find(v => v.lang && (v.lang.startsWith('ar') || v.lang.includes('AR'))) || null;
+      }
+      speakEnglish(text, onEnd = null) {
+        if (sfx.muted || !this.synth) { if (onEnd) onEnd(); return; }
+        this.synth.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        if (this.enVoice) utter.voice = this.enVoice;
+        utter.lang = 'en-CA';
+        utter.rate = this.rate;
+        utter.pitch = 1.05;
+        if (onEnd) {
+          utter.onend = onEnd;
+          utter.onerror = onEnd;
+        }
+        this.synth.speak(utter);
+      }
+      speakArabic(text, onEnd = null) {
+        if (sfx.muted || !this.synth) { if (onEnd) onEnd(); return; }
+        this.synth.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        if (this.arVoice) utter.voice = this.arVoice;
+        utter.lang = 'ar-SA';
+        utter.rate = 0.95;
+        if (onEnd) {
+          utter.onend = onEnd;
+          utter.onerror = onEnd;
+        }
+        this.synth.speak(utter);
+      }
+      stop() {
+        if (this.synth) this.synth.cancel();
+      }
+    }
+    const speaker = new SpeechEngine();
+
+    function playItemAudio(word) {
+      sfx.playPop();
+      speaker.speakEnglish(word);
+    }
+
+    /* =========================================================================
+       3. VOCABULARY & EXERCISE DATA DICTIONARY
+       ========================================================================= */
+    const VOCAB_DATA = [
+      { id: 1, word: 'Balloons', missing: ['o', 'o'], ar: 'بالونات', icon: '🎈' },
+      { id: 2, word: 'guitar', missing: ['t'], ar: 'قيثارة / جيتار', icon: '🎸' },
+      { id: 3, word: 'Bus', missing: ['u'], ar: 'حافلة', icon: '🚌' },
+      { id: 4, word: 'drums', missing: ['m'], ar: 'طبول', icon: '🥁' },
+      { id: 5, word: 'camera', missing: ['r'], ar: 'كاميرا', icon: '📷' },
+      { id: 6, word: 'photo', missing: ['o'], ar: 'صورة', icon: '🖼️' },
+      { id: 7, word: 'poster', missing: ['s'], ar: 'لوحة إعلانية', icon: '🪧' },
+      { id: 8, word: 'playground', missing: ['l', 'g'], ar: 'منطقة الألعاب بالحديقة', icon: '🛝' }
+    ];
+
+    let totalScore = 0;
+    let selectedBankLetter = null;
+
+    /* =========================================================================
+       4. WORKSHEET SECTION 1: WRITE THE MISSING LETTERS LOGIC
+       ========================================================================= */
+    // Map of answers
+    const missingSlotAnswers = {
+      '1-a': { expected: 'o', filled: false },
+      '1-b': { expected: 'o', filled: false },
+      '2-a': { expected: 't', filled: false },
+      '3-a': { expected: 'u', filled: false },
+      '4-a': { expected: 'm', filled: false },
+      '5-a': { expected: 'r', filled: false },
+      '6-a': { expected: 'o', filled: false },
+      '7-a': { expected: 's', filled: false },
+      '8-a': { expected: 'l', filled: false },
+      '8-b': { expected: 'g', filled: false }
+    };
+
+    function initMissingLetterBank() {
+      const container = document.getElementById('missingLettersBank');
+      if (!container) return;
+      container.innerHTML = '';
+      
+      const letters = ['o', 't', 'u', 'm', 'r', 's', 'l', 'g'];
+      letters.forEach(ltr => {
+        const btn = document.createElement('button');
+        btn.id = `bankLtr-${ltr}`;
+        btn.className = "w-8 h-8 rounded-xl bg-white border-2 border-sky-300 text-sky-950 font-black en-font text-lg hover:bg-sky-100 transition active:scale-95 shadow-2xs";
+        btn.textContent = ltr;
+        btn.onclick = () => selectBankLetter(ltr, btn);
+        container.appendChild(btn);
+      });
+    }
+
+    function selectBankLetter(ltr, btnEl) {
+      sfx.playPop();
+      speaker.speakEnglish(ltr);
+      selectedBankLetter = ltr;
+      document.querySelectorAll('#missingLettersBank button').forEach(b => b.classList.remove('ring-4', 'ring-sky-400', 'bg-sky-200'));
+      btnEl.classList.add('ring-4', 'ring-sky-400', 'bg-sky-200');
+      showToast(true, `تم اختيار الحرف (${ltr})`, "انقر الآن على الفراغ المطلوب لتعبئته");
+    }
+
+    function handleSlotInteraction(itemId, slotSuffix, expectedChar) {
+      const slotKey = `${itemId}-${slotSuffix}`;
+      const slotState = missingSlotAnswers[slotKey];
+      const slotEl = document.getElementById(`slot-${slotKey}`);
+
+      if (slotState.filled) {
+        // already correct, pronounce
+        sfx.playPop();
+        speaker.speakEnglish(expectedChar);
+        return;
+      }
+
+      if (!selectedBankLetter) {
+        // If user hasn't selected a letter from bank, auto prompt or allow filling if typed
+        showToast(false, "اختر حرفاً من بنك الحروف أولاً!", "انقر على أحد الحروف الزرقاء في الأعلى ثم انقر الفراغ.");
+        sfx.playError();
+        return;
+      }
+
+      if (selectedBankLetter.toLowerCase() === expectedChar.toLowerCase()) {
+        // Correct letter!
+        sfx.playSuccess();
+        slotState.filled = true;
+        slotEl.textContent = expectedChar;
+        slotEl.className = "missing-input-slot filled-correct pop-success";
+        totalScore += 1;
+        updateScoreDisplay();
+
+        confetti({ particleCount: 25, spread: 50 });
+        showToast(true, "ممتاز! حرف صحيح", `الحرف (${expectedChar}) في مكانه المناسب.`);
+
+        // فحص هل اكتملت جميع الفراغات لهذه الكلمة
+        const item = VOCAB_DATA.find(v => v.id === itemId);
+        let allSlotsFilled = true;
+        if (itemId === 1) allSlotsFilled = missingSlotAnswers['1-a'].filled && missingSlotAnswers['1-b'].filled;
+        else if (itemId === 8) allSlotsFilled = missingSlotAnswers['8-a'].filled && missingSlotAnswers['8-b'].filled;
+        else allSlotsFilled = missingSlotAnswers[`${itemId}-a`].filled;
+
+        if (allSlotsFilled) {
+          const box = document.getElementById(`box-miss-${itemId}`);
+          if (box) box.classList.add('bg-emerald-50', 'border-emerald-400', 'pop-success');
+        }
+
+        // ينطق الحرف أولاً باللغة الإنجليزية، ثم يقول بعده "الإجابة صحيحة"، وإذا اكتملت الكلمة ينطق الكلمة كاملة
+        speaker.speakEnglish(expectedChar, () => {
+          speaker.speakArabic("الإجابة صحيحة", () => {
+            if (allSlotsFilled && item) {
+              speaker.speakEnglish(item.word);
+            }
+          });
+        });
+      } else {
+        // Wrong letter
+        sfx.playError();
+        slotEl.classList.add('shake-anim', 'filled-wrong');
+        setTimeout(() => slotEl.classList.remove('shake-anim', 'filled-wrong'), 450);
+        speaker.speakArabic("إجابة خاطئة");
+        showToast(false, "حاول مرة أخرى!", `الحرف (${selectedBankLetter}) ليس الحرف الناقص هنا.`);
+      }
+    }
+
+    function checkIfItemWordComplete(itemId) {
+      // تم دمجها بنجاح داخل التسلسل الصوتي
+    }
+
+    /* =========================================================================
+       5. WORKSHEET SECTION 2: CHOOSE RIGHT ANSWER (Bag, pens, notebooks, happy)
+       ========================================================================= */
+    let selectedP2Word = null;
+    const part2Solved = { 1: false, 2: false, 3: false, 4: false };
+
+    function selectP2Word(word) {
+      sfx.playPop();
+      speaker.speakEnglish(word);
+      selectedP2Word = word;
+      document.querySelectorAll('#part2BankRow .choice-pill-btn').forEach(b => b.classList.remove('is-active-choice'));
+      const activeBtn = document.getElementById(`btn-p2-${word}`);
+      if (activeBtn) activeBtn.classList.add('is-active-choice');
+      showToast(true, `تم اختيار (${word})`, "انقر الآن على السطر تحت الصورة المناسبة");
+    }
+
+    function assignPart2Answer(itemNum, correctWord) {
+      if (part2Solved[itemNum]) {
+        sfx.playPop();
+        speaker.speakEnglish(correctWord);
+        return;
+      }
+
+      if (!selectedP2Word) {
+        sfx.playError();
+        showToast(false, "اختر كلمة أولاً!", "انقر على إحدى الكلمات في الشريط الأزرق أولاً.");
+        return;
+      }
+
+      const lineEl = document.getElementById(`line-p2-${itemNum}`);
+
+      if (selectedP2Word.toLowerCase() === correctWord.toLowerCase()) {
+        sfx.playSuccess();
+        part2Solved[itemNum] = true;
+        totalScore += 2;
+        updateScoreDisplay();
+
+        lineEl.textContent = correctWord;
+        lineEl.className = "ruled-line-slot line-correct pop-success";
+
+        const btn = document.getElementById(`btn-p2-${correctWord}`);
+        if (btn) btn.classList.add('opacity-40', 'line-through');
+
+        confetti({ particleCount: 30, spread: 60 });
+        speaker.speakArabic("الإجابة صحيحة", () => {
+          speaker.speakEnglish(correctWord);
+        });
+
+        showToast(true, "أحسنت! اختيار سليم", `${correctWord}`);
+        selectedP2Word = null;
+        document.querySelectorAll('#part2BankRow .choice-pill-btn').forEach(b => b.classList.remove('is-active-choice'));
+      } else {
+        sfx.playError();
+        lineEl.classList.add('shake-anim', 'text-rose-600');
+        setTimeout(() => lineEl.classList.remove('shake-anim', 'text-rose-600'), 450);
+        speaker.speakArabic("إجابة خاطئة");
+        showToast(false, "إجابة غير صحيحة", `الكلمة (${selectedP2Word}) لا تطابق هذه الصورة.`);
+      }
+    }
+
+    /* =========================================================================
+       6. WORKSHEET SECTION 3: CHOOSE RIGHT ANSWER (Old, laugh, teacher, new)
+       ========================================================================= */
+    let selectedP3Word = null;
+    const part3Solved = { 1: false, 2: false, 3: false, 4: false };
+
+    function selectP3Word(word) {
+      sfx.playPop();
+      speaker.speakEnglish(word);
+      selectedP3Word = word;
+      document.querySelectorAll('#part3BankRow .choice-pill-btn').forEach(b => b.classList.remove('is-active-choice'));
+      const activeBtn = document.getElementById(`btn-p3-${word}`);
+      if (activeBtn) activeBtn.classList.add('is-active-choice');
+      showToast(true, `تم اختيار (${word})`, "انقر الآن على السطر تحت الصورة المطابقة");
+    }
+
+    function assignPart3Answer(itemNum, correctWord) {
+      if (part3Solved[itemNum]) {
+        sfx.playPop();
+        speaker.speakEnglish(correctWord);
+        return;
+      }
+
+      if (!selectedP3Word) {
+        sfx.playError();
+        showToast(false, "اختر كلمة أولاً!", "انقر على إحدى الكلمات في الشريط الأزرق أولاً.");
+        return;
+      }
+
+      const lineEl = document.getElementById(`line-p3-${itemNum}`);
+
+      if (selectedP3Word.toLowerCase() === correctWord.toLowerCase()) {
+        sfx.playSuccess();
+        part3Solved[itemNum] = true;
+        totalScore += 2;
+        updateScoreDisplay();
+
+        lineEl.textContent = correctWord;
+        lineEl.className = "ruled-line-slot line-correct pop-success";
+
+        const btn = document.getElementById(`btn-p3-${correctWord}`);
+        if (btn) btn.classList.add('opacity-40', 'line-through');
+
+        confetti({ particleCount: 30, spread: 60 });
+        speaker.speakArabic("الإجابة صحيحة", () => {
+          speaker.speakEnglish(correctWord);
+        });
+
+        showToast(true, "أحسنت! اختيار سليم", `${correctWord}`);
+        selectedP3Word = null;
+        document.querySelectorAll('#part3BankRow .choice-pill-btn').forEach(b => b.classList.remove('is-active-choice'));
+      } else {
+        sfx.playError();
+        lineEl.classList.add('shake-anim', 'text-rose-600');
+        setTimeout(() => lineEl.classList.remove('shake-anim', 'text-rose-600'), 450);
+        speaker.speakArabic("إجابة خاطئة");
+        showToast(false, "إجابة غير صحيحة", `الكلمة (${selectedP3Word}) لا تطابق هذه الصورة.`);
+      }
+    }
+
+    function resetFullWorksheet() {
+      sfx.playPop();
+      // Reset Part 1
+      Object.keys(missingSlotAnswers).forEach(k => {
+        missingSlotAnswers[k].filled = false;
+        const el = document.getElementById(`slot-${k}`);
+        if (el) {
+          el.textContent = '_';
+          el.className = "missing-input-slot";
+        }
+      });
+      for (let i = 1; i <= 8; i++) {
+        const box = document.getElementById(`box-miss-${i}`);
+        if (box) box.className = box.className.replace('bg-emerald-50', '').replace('border-emerald-400', '').replace('pop-success', '');
+      }
+
+      // Reset Part 2
+      for (let i = 1; i <= 4; i++) {
+        part2Solved[i] = false;
+        const line = document.getElementById(`line-p2-${i}`);
+        if (line) {
+          line.textContent = '-------';
+          line.className = 'ruled-line-slot';
+        }
+      }
+      document.querySelectorAll('#part2BankRow .choice-pill-btn').forEach(b => b.className = "choice-pill-btn px-3 py-1 rounded-xl bg-sky-50 border border-sky-200 hover:bg-sky-100");
+
+      // Reset Part 3
+      for (let i = 1; i <= 4; i++) {
+        part3Solved[i] = false;
+        const line = document.getElementById(`line-p3-${i}`);
+        if (line) {
+          line.textContent = '-------';
+          line.className = 'ruled-line-slot';
+        }
+      }
+      document.querySelectorAll('#part3BankRow .choice-pill-btn').forEach(b => b.className = "choice-pill-btn px-3 py-1 rounded-xl bg-blue-50 border border-blue-200 hover:bg-blue-100");
+
+      totalScore = 0;
+      updateScoreDisplay();
+      showToast(true, "تمت إعادة تعيين الورقة بالكامل 🔄");
+    }
+
+    /* =========================================================================
+       7. MODE 2: MATCHING GAME (وصل الكلمات بالصور)
+       ========================================================================= */
+    const MATCH_PAIRS_DATA = [
+      { id: 1, word: 'Balloons', letter: 'c', icon: '🎈' },
+      { id: 2, word: 'guitar', letter: 'b', icon: '🎸' },
+      { id: 3, word: 'Bus', letter: 'a', icon: '🚌' },
+      { id: 4, word: 'drums', letter: 'g', icon: '🥁' },
+      { id: 5, word: 'camera', letter: 'f', icon: '📷' },
+      { id: 6, word: 'photo', letter: 'e', icon: '🖼️' },
+      { id: 7, word: 'poster', letter: 'h', icon: '🪧' },
+      { id: 8, word: 'playground', letter: 'd', icon: '🛝' }
+    ];
+
+    let matchSelectedWord = null;
+    let matchSelectedPic = null;
+    const matchGameState = {};
+
+    function initMatchGameMode() {
+      const container = document.getElementById('matchPairsContainer');
+      container.innerHTML = '';
+
+      // Left column words
+      const wordsCol = document.createElement('div');
+      wordsCol.className = "flex flex-col gap-3";
+      MATCH_PAIRS_DATA.forEach(item => {
+        const card = document.createElement('div');
+        card.id = `matchWord-${item.id}`;
+        card.className = "p-3.5 sm:p-4 rounded-2xl bg-sky-50 border-2 border-sky-200 hover:border-sky-400 cursor-pointer flex items-center justify-between shadow-xs transition hover:scale-102";
+        card.innerHTML = `
+          <span class="en-font font-black text-xl sm:text-2xl text-slate-900">${item.id}- ${item.word}</span>
+          <span class="en-font font-black text-lg bg-white px-3 py-1 rounded-xl border border-sky-200" id="matchSlot-${item.id}">(   )</span>
+        `;
+        card.onclick = () => selectMatchWord(item, card);
+        wordsCol.appendChild(card);
+      });
+
+      // Right column pics shuffled
+      const picsCol = document.createElement('div');
+      picsCol.className = "flex flex-col gap-3";
+      const shuffledPics = [...MATCH_PAIRS_DATA].sort(() => 0.5 - Math.random());
+      shuffledPics.forEach(item => {
+        const card = document.createElement('div');
+        card.id = `matchPic-${item.letter}`;
+        card.className = "p-3 sm:p-3.5 rounded-2xl bg-amber-50 border-2 border-amber-200 hover:border-amber-400 cursor-pointer flex items-center justify-between shadow-xs transition hover:scale-102";
+        card.innerHTML = `
+          <span class="en-font font-black text-2xl text-slate-900 px-2">${item.letter}</span>
+          <span class="text-4xl sm:text-5xl drop-shadow-sm">${item.icon}</span>
+        `;
+        card.onclick = () => selectMatchPic(item, card);
+        picsCol.appendChild(card);
+      });
+
+      container.appendChild(wordsCol);
+      container.appendChild(picsCol);
+    }
+
+    function selectMatchWord(item, el) {
+      if (matchGameState[item.id]) return;
+      sfx.playPop();
+      speaker.speakEnglish(item.word);
+
+      document.querySelectorAll('#matchPairsContainer [id^="matchWord-"]').forEach(c => c.classList.remove('ring-4', 'ring-sky-400', 'bg-sky-100'));
+      el.classList.add('ring-4', 'ring-sky-400', 'bg-sky-100');
+      matchSelectedWord = { item, el };
+
+      if (matchSelectedPic) evaluateMatchAction();
+    }
+
+    function selectMatchPic(item, el) {
+      if (Object.values(matchGameState).includes(item.letter)) return;
+      sfx.playPop();
+      speaker.speakEnglish(item.word);
+
+      document.querySelectorAll('#matchPairsContainer [id^="matchPic-"]').forEach(c => c.classList.remove('ring-4', 'ring-amber-400', 'bg-amber-100'));
+      el.classList.add('ring-4', 'ring-amber-400', 'bg-amber-100');
+      matchSelectedPic = { item, el };
+
+      if (matchSelectedWord) evaluateMatchAction();
+    }
+
+    function evaluateMatchAction() {
+      const isCorrect = (matchSelectedWord.item.id === matchSelectedPic.item.id);
+
+      if (isCorrect) {
+        sfx.playSuccess();
+        totalScore += 2;
+        updateScoreDisplay();
+        matchGameState[matchSelectedWord.item.id] = matchSelectedPic.item.letter;
+
+        // Fill slot
+        document.getElementById(`matchSlot-${matchSelectedWord.item.id}`).textContent = `( ${matchSelectedPic.item.letter} )`;
+
+        // Style
+        matchSelectedWord.el.className = "p-3.5 sm:p-4 rounded-2xl bg-emerald-100 border-2 border-emerald-400 flex items-center justify-between shadow-xs pop-success opacity-90 pointer-events-none";
+        matchSelectedPic.el.className = "p-3 sm:p-3.5 rounded-2xl bg-emerald-100 border-2 border-emerald-400 flex items-center justify-between shadow-xs pop-success opacity-90 pointer-events-none";
+
+        confetti({ particleCount: 35, spread: 60 });
+        speaker.speakArabic("الإجابة صحيحة", () => {
+          speaker.speakEnglish(matchSelectedWord.item.word);
+        });
+        showToast(true, "توصيل صحيح ممتاز!", `${matchSelectedWord.item.word} ➔ (${matchSelectedPic.item.letter})`);
+      } else {
+        sfx.playError();
+        matchSelectedWord.el.classList.add('shake-anim');
+        matchSelectedPic.el.classList.add('shake-anim');
+        const w = matchSelectedWord.el;
+        const p = matchSelectedPic.el;
+        setTimeout(() => {
+          w.classList.remove('shake-anim', 'ring-4', 'ring-sky-400', 'bg-sky-100');
+          p.classList.remove('shake-anim', 'ring-4', 'ring-amber-400', 'bg-amber-100');
+        }, 450);
+        speaker.speakArabic("إجابة خاطئة");
+        showToast(false, "حاول مرة أخرى!", "الكلمة لا تطابق هذه الصورة.");
+      }
+
+      matchSelectedWord = null;
+      matchSelectedPic = null;
+    }
+
+    /* =========================================================================
+       8. MODE 3: UNSCRAMBLE LETTERS & SPELLING LOGIC
+       ========================================================================= */
+    let currentSpellIdx = 0;
+    let placedLettersArr = [];
+    let scrambledLetterObjs = [];
+    let spellSolvedArr = Array(VOCAB_DATA.length).fill(false);
+
+    function initSpellingMode() {
+      renderSpellingPills();
+      loadSpellingPuzzle(0);
+    }
+
+    function renderSpellingPills() {
+      const row = document.getElementById('spellingPillsRow');
+      if (!row) return;
+      row.innerHTML = '';
+      VOCAB_DATA.forEach((item, idx) => {
+        const btn = document.createElement('button');
+        const isCurrent = (idx === currentSpellIdx);
+        const isSolved = spellSolvedArr[idx];
+        btn.className = `px-3 py-1.5 rounded-xl font-black text-xs transition shadow-2xs ${
+          isCurrent ? 'bg-purple-600 text-white' : isSolved ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+        }`;
+        // Hide word name until solved
+        btn.textContent = isSolved ? `${idx + 1}. ${item.word} ✅` : `الكلمة ${idx + 1} ❓`;
+        btn.onclick = () => loadSpellingPuzzle(idx);
+        row.appendChild(btn);
+      });
+    }
+
+    function loadSpellingPuzzle(idx) {
+      sfx.playPop();
+      currentSpellIdx = idx;
+      placedLettersArr = [];
+      renderSpellingPills();
+
+      const item = VOCAB_DATA[idx];
+      const targetWord = item.word.toLowerCase();
+
+      document.getElementById('spellingProgressLabel').textContent = spellSolvedArr[idx] 
+        ? `الكلمة: ${idx + 1} من 8 (${item.word} - ${item.ar})`
+        : `الكلمة: ${idx + 1} من 8`;
+
+      // Render big icon
+      document.getElementById('spellingPicBox').innerHTML = `<span class="text-7xl drop-shadow-md select-none">${item.icon}</span>`;
+
+      // Create target slots
+      const slotsRow = document.getElementById('spellingSlotsRow');
+      slotsRow.innerHTML = '';
+      for (let i = 0; i < targetWord.length; i++) {
+        const slot = document.createElement('div');
+        slot.id = `spellSlot-${i}`;
+        slot.className = "w-10 h-12 sm:w-12 sm:h-14 bg-white rounded-t-xl border-b-4 border-purple-500 flex items-center justify-center font-black en-font text-2xl sm:text-3xl text-purple-950 shadow-inner cursor-pointer";
+        slot.textContent = "_";
+        slot.onclick = () => removeLastSpellingLetter();
+        slotsRow.appendChild(slot);
+      }
+
+      // Scramble letters
+      scrambledLetterObjs = targetWord.split('').map((char, index) => ({ char, id: `tile-${index}` }));
+      scrambledLetterObjs.sort(() => Math.random() - 0.5);
+      if (scrambledLetterObjs.map(s => s.char).join('') === targetWord && targetWord.length > 2) {
+        scrambledLetterObjs.reverse();
+      }
+
+      renderSpellingTilesBank();
+      setTimeout(() => speaker.speakEnglish(item.word), 300);
+    }
+
+    function renderSpellingTilesBank() {
+      const bank = document.getElementById('spellingLetterBank');
+      bank.innerHTML = '';
+      scrambledLetterObjs.forEach(tile => {
+        const isUsed = placedLettersArr.some(p => p.id === tile.id);
+        const b = document.createElement('button');
+        b.className = `w-10 h-12 sm:w-12 sm:h-14 rounded-2xl bg-amber-100 hover:bg-amber-200 border-2 border-amber-300 text-amber-950 font-black en-font text-2xl sm:text-3xl flex items-center justify-center shadow-xs transition active:scale-95 ${isUsed ? 'opacity-20 pointer-events-none' : ''}`;
+        b.textContent = tile.char;
+        b.onclick = () => placeSpellingLetter(tile);
+        bank.appendChild(b);
+      });
+    }
+
+    function placeSpellingLetter(tile) {
+      const targetWord = VOCAB_DATA[currentSpellIdx].word.toLowerCase();
+      if (placedLettersArr.length >= targetWord.length) return;
+
+      sfx.playPop();
+      speaker.speakEnglish(tile.char);
+
+      const nextSlotIdx = placedLettersArr.length;
+      placedLettersArr.push(tile);
+
+      const slot = document.getElementById(`spellSlot-${nextSlotIdx}`);
+      slot.textContent = tile.char;
+      slot.classList.add('pop-success');
+
+      renderSpellingTilesBank();
+
+      if (placedLettersArr.length === targetWord.length) {
+        checkSpellingResult();
+      }
+    }
+
+    function removeLastSpellingLetter() {
+      if (placedLettersArr.length === 0) return;
+      sfx.playPop();
+      placedLettersArr.pop();
+      const slot = document.getElementById(`spellSlot-${placedLettersArr.length}`);
+      slot.textContent = "_";
+      slot.className = "w-10 h-12 sm:w-12 sm:h-14 bg-white rounded-t-xl border-b-4 border-purple-500 flex items-center justify-center font-black en-font text-2xl sm:text-3xl text-purple-950 shadow-inner cursor-pointer";
+      renderSpellingTilesBank();
+    }
+
+    function clearCurrentSpelling() {
+      sfx.playPop();
+      placedLettersArr = [];
+      const targetWord = VOCAB_DATA[currentSpellIdx].word.toLowerCase();
+      for (let i = 0; i < targetWord.length; i++) {
+        const slot = document.getElementById(`spellSlot-${i}`);
+        slot.textContent = "_";
+        slot.className = "w-10 h-12 sm:w-12 sm:h-14 bg-white rounded-t-xl border-b-4 border-purple-500 flex items-center justify-center font-black en-font text-2xl sm:text-3xl text-purple-950 shadow-inner cursor-pointer";
+      }
+      renderSpellingTilesBank();
+    }
+
+    function checkSpellingResult() {
+      const targetWord = VOCAB_DATA[currentSpellIdx].word.toLowerCase();
+      const userSpelling = placedLettersArr.map(p => p.char).join('');
+
+      if (userSpelling === targetWord) {
+        sfx.playSuccess();
+        totalScore += 2;
+        updateScoreDisplay();
+        spellSolvedArr[currentSpellIdx] = true;
+        renderSpellingPills();
+        document.getElementById('spellingProgressLabel').textContent = `الكلمة: ${currentSpellIdx + 1} من 8 (${VOCAB_DATA[currentSpellIdx].word} - ${VOCAB_DATA[currentSpellIdx].ar})`;
+
+        for (let i = 0; i < targetWord.length; i++) {
+          const slot = document.getElementById(`spellSlot-${i}`);
+          slot.className = "w-10 h-12 sm:w-12 sm:h-14 rounded-t-xl bg-emerald-100 border-b-4 border-emerald-500 text-emerald-800 flex items-center justify-center font-black en-font text-2xl sm:text-3xl pop-success";
+        }
+
+        confetti({ particleCount: 35, spread: 60 });
+        speaker.speakArabic("الإجابة صحيحة", () => {
+          speaker.speakEnglish(VOCAB_DATA[currentSpellIdx].word);
+        });
+        showToast(true, "أحسنت! ترتيب الحروف سليم تماماً", `${VOCAB_DATA[currentSpellIdx].word}`);
+
+        setTimeout(() => {
+          if (currentSpellIdx < VOCAB_DATA.length - 1) {
+            loadSpellingPuzzle(currentSpellIdx + 1);
+          }
+        }, 1600);
+      } else {
+        sfx.playError();
+        const box = document.getElementById('spellingWorkspace');
+        box.classList.add('shake-anim');
+        setTimeout(() => box.classList.remove('shake-anim'), 450);
+
+        for (let i = 0; i < targetWord.length; i++) {
+          const slot = document.getElementById(`spellSlot-${i}`);
+          slot.className = "w-10 h-12 sm:w-12 sm:h-14 rounded-t-xl bg-rose-100 border-b-4 border-rose-500 text-rose-800 flex items-center justify-center font-black en-font text-2xl sm:text-3xl";
+        }
+
+        speaker.speakArabic("إجابة خاطئة");
+        showToast(false, "حاول مرة أخرى!", "رتّب الحروف بالترتيب الصحيح لتكوين الكلمة.");
+      }
+    }
+
+    function helpSolveSpelling() {
+      sfx.playPop();
+      const targetWord = VOCAB_DATA[currentSpellIdx].word.toLowerCase();
+      placedLettersArr = [];
+      targetWord.split('').forEach((char, idx) => {
+        placedLettersArr.push({ char, id: `tile-${idx}` });
+        const slot = document.getElementById(`spellSlot-${idx}`);
+        slot.textContent = char;
+        slot.className = "w-10 h-12 sm:w-12 sm:h-14 rounded-t-xl bg-emerald-100 border-b-4 border-emerald-500 text-emerald-800 flex items-center justify-center font-black en-font text-2xl sm:text-3xl";
+      });
+      renderSpellingTilesBank();
+      spellSolvedArr[currentSpellIdx] = true;
+      renderSpellingPills();
+      document.getElementById('spellingProgressLabel').textContent = `الكلمة: ${currentSpellIdx + 1} من 8 (${VOCAB_DATA[currentSpellIdx].word} - ${VOCAB_DATA[currentSpellIdx].ar})`;
+      speaker.speakEnglish(VOCAB_DATA[currentSpellIdx].word);
+    }
+
+    function nextSpellingPuzzle() {
+      const nextIdx = (currentSpellIdx + 1) % VOCAB_DATA.length;
+      loadSpellingPuzzle(nextIdx);
+    }
+
+    function playSpellingAudioHint() {
+      sfx.playPop();
+      speaker.speakEnglish(VOCAB_DATA[currentSpellIdx].word);
+    }
+
+    /* =========================================================================
+       9. GENERAL CONTROLS, NAVIGATION & TOASTS
+       ========================================================================= */
+    function switchMode(mode) {
+      sfx.playPop();
+
+      document.getElementById('viewSheetMode').classList.add('hidden');
+      document.getElementById('viewMatchMode').classList.add('hidden');
+      document.getElementById('viewSpellingMode').classList.add('hidden');
+
+      document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active-tab'));
+
+      if (mode === 'sheet') {
+        document.getElementById('viewSheetMode').classList.remove('hidden');
+        document.getElementById('tabBtn-sheet').classList.add('active-tab');
+      } else if (mode === 'match') {
+        document.getElementById('viewMatchMode').classList.remove('hidden');
+        document.getElementById('tabBtn-match').classList.add('active-tab');
+        initMatchGameMode();
+      } else if (mode === 'spelling') {
+        document.getElementById('viewSpellingMode').classList.remove('hidden');
+        document.getElementById('tabBtn-spelling').classList.add('active-tab');
+        initSpellingMode();
+      }
+    }
+
+    function setAudioSpeed(val) {
+      sfx.playPop();
+      speaker.rate = val;
+      if (val === 0.85) {
+        document.getElementById('speedSlow').className = "px-2.5 py-0.5 rounded-xl bg-sky-600 text-white font-black shadow-xs transition";
+        document.getElementById('speedNormal').className = "px-2 py-0.5 rounded-xl font-bold text-slate-600 hover:bg-white transition";
+      } else {
+        document.getElementById('speedNormal').className = "px-2.5 py-0.5 rounded-xl bg-sky-600 text-white font-black shadow-xs transition";
+        document.getElementById('speedSlow').className = "px-2 py-0.5 rounded-xl font-bold text-slate-600 hover:bg-white transition";
+      }
+      showToast(true, `سرعة النطق: ${val}x`, "تم ضبط سرعة الصوت بنجاح");
+    }
+
+    function toggleAudioMute() {
+      sfx.playPop();
+      sfx.muted = !sfx.muted;
+      document.getElementById('muteIcon').textContent = sfx.muted ? '🔇' : '🔊';
+      if (sfx.muted) {
+        speaker.stop();
+        showToast(false, "تم كتم الصوت 🔇", "انقر مجدداً لتفعيل الصوت");
+      } else {
+        showToast(true, "تم تفعيل الصوت 🔊", "استمتع بالنطق الإنجليزي والاستجابة الصوتية");
+      }
+    }
+
+    function updateScoreDisplay() {
+      document.getElementById('scoreTracker').textContent = totalScore;
+    }
+
+    function showToast(isSuccess, title, message) {
+      const toast = document.getElementById('toastNotification');
+      if (!toast) return;
+
+      const titleEl = document.getElementById('toastTitle');
+      const msgEl = document.getElementById('toastMsg');
+      const iconEl = document.getElementById('toastIcon');
+
+      iconEl.textContent = isSuccess ? "✅" : "⚠️";
+      titleEl.textContent = title;
+      msgEl.textContent = message;
+
+      toast.classList.remove('translate-y-28', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      clearTimeout(toast._timeout);
+      toast._timeout = setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-28', 'opacity-0');
+      }, 2600);
+    }
+
+    window.onload = function() {
+      initMissingLetterBank();
+      updateScoreDisplay();
+    };
+  </script>
+</body>
+</html>
